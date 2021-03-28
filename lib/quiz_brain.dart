@@ -4,19 +4,23 @@ import 'package:translator/translator.dart';
 
 class QuizzBrain{
   final _translator = GoogleTranslator();
-  final List<Question> _questions = nouns.map((word) => Question(word, word)).toList();
+  final List<Question> _questions = nouns.map((word) => Question(word, '')).toList();
 
   int _questionNumber = 0;
 
   Question getQuestion() => this._questions[_questionNumber];
+
   void nextQuestion() {
     if(_questionNumber < _questions.length - 1)
       _questionNumber++;
   }
 
   Future<bool> checkAnswer(String input) async {
-    String correctAnswer = await _translate();
-    this._questions[_questionNumber].answer = correctAnswer;
+    String correctAnswer = this._questions[_questionNumber].answer;
+    if(correctAnswer == ''){
+      correctAnswer = await _translate();
+      this._questions[_questionNumber].answer = correctAnswer;
+    }
     return correctAnswer.toLowerCase() == input.toLowerCase();
   }
 
