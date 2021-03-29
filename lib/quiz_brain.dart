@@ -15,6 +15,12 @@ class QuizzBrain{
       _questionNumber++;
   }
 
+  bool get isFinish => _questionNumber >= 10;
+
+  void reset(){
+    _questionNumber = 0;
+  }
+
   Future<bool> checkAnswer(String input) async {
     String correctAnswer = this._questions[_questionNumber].answer;
     if(correctAnswer == ''){

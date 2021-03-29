@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -19,7 +18,119 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
   int _correctCount = 0;
   int _incorrectCount = 0;
 
-  void _showAlertResult(bool isCorrectAnswer) async {
+  void _reset() => setState(() {
+        _correctCount = 0;
+        _incorrectCount = 0;
+        _controller.clear();
+        _nounsQuizzBrain.reset();
+      });
+
+  void _nextQuestion() {
+    {
+      if (_nounsQuizzBrain.isFinish)
+        _showFinishAlert();
+      else{
+        _nounsQuizzBrain.nextQuestion();
+      }
+    }
+  }
+
+  void _checkAnswer() {
+    if (_controller.text.isEmpty) return;
+
+    _nounsQuizzBrain
+        .checkAnswer(_controller.text)
+        .then((answer) {
+          _showResultAlert(answer);
+          _controller.clear();
+        });
+    //_focusNode.unfocus();
+  }
+
+  void _showCorrectAnswerAlert() => Alert(
+        context: context,
+        style: AlertStyle(
+          animationType: AnimationType.grow,
+          animationDuration: Duration(milliseconds: 400),
+          isCloseButton: false,
+          isOverlayTapDismiss: false,
+        ),
+        title: 'Правильный ответ:',
+        type: AlertType.info,
+        desc: _nounsQuizzBrain.getQuestion().answer.toUpperCase(),
+        buttons: [
+          DialogButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _nextQuestion();
+              });
+            },
+          )
+        ],
+      ).show();
+
+  void _showFinishAlert() {
+    Alert(
+      context: context,
+      style: AlertStyle(
+        animationType: AnimationType.grow,
+        animationDuration: Duration(milliseconds: 400),
+        backgroundColor: Colors.grey.shade100,
+      ),
+      title: 'Итог',
+      content: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.check,
+                color: Colors.green,
+              ),
+              Text(
+                ': $_correctCount',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 16.0,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(
+                Icons.close,
+                color: Colors.red,
+              ),
+              Text(
+                ': $_incorrectCount',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 16.0,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      closeFunction: () => _reset(),
+      buttons: [
+        DialogButton(
+          child: Text('OK'),
+          onPressed: () {
+            _reset();
+            Navigator.pop(context);
+          },
+        )
+      ],
+    ).show();
+  }
+
+  void _showResultAlert(bool isCorrectAnswer) async {
     await Alert(
       context: context,
       style: AlertStyle(
@@ -34,13 +145,17 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
           ? <DialogButton>[
               DialogButton(
                 color: Colors.green,
-                child: Text('Next'),
+                child: Text(
+                  'Next',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
                 onPressed: () {
                   Navigator.pop(context);
                   setState(() {
-                    _controller.clear();
                     _correctCount++;
-                    _nounsQuizzBrain.nextQuestion();
+                    _nextQuestion();
                   });
                 },
               ),
@@ -52,6 +167,7 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
                   'Try again',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
                 onPressed: () {
@@ -70,30 +186,9 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
                   ),
                 ),
                 onPressed: () {
+                  _incorrectCount++;
                   Navigator.pop(context);
-                  Alert(
-                    context: context,
-                    style: AlertStyle(
-                      animationType: AnimationType.grow,
-                      animationDuration: Duration(milliseconds: 400),
-                      isCloseButton: false,
-                      isOverlayTapDismiss: false,
-                    ),
-                    title: 'Правильный ответ:',
-                    type: AlertType.info,
-                    desc: _nounsQuizzBrain.getQuestion().answer.toUpperCase(),
-                    buttons: [
-                      DialogButton(
-                        child: Text('OK'),
-                        onPressed: () => Navigator.pop(context),
-                      )
-                    ],
-                  ).show();
-                  setState(() {
-                    _controller.clear();
-                    _incorrectCount++;
-                    _nounsQuizzBrain.nextQuestion();
-                  });
+                  _showCorrectAnswerAlert();
                 },
               ),
             ],
@@ -184,11 +279,7 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextField(
-                  onSubmitted: (value) {
-                    _nounsQuizzBrain.checkAnswer(_controller.text).then((value) {
-                      _showAlertResult(value);
-                    });
-                  },
+                  onSubmitted: (_) => _checkAnswer(),
                   focusNode: _focusNode,
                   controller: _controller,
                   style: TextStyle(
@@ -196,10 +287,6 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
                     fontSize: 24.0,
                   ),
                   decoration: InputDecoration(
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey.shade500),
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
-                    ),
                     filled: true,
                     focusColor: Colors.white70,
                     fillColor: Colors.white,
@@ -207,8 +294,11 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
                       borderSide: BorderSide(color: Colors.grey.shade500),
                       borderRadius: BorderRadius.all(Radius.circular(16)),
                     ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey.shade500),
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    ),
                   ),
-                  toolbarOptions: ToolbarOptions(),
                   cursorColor: Colors.grey.shade900,
                   strutStyle: StrutStyle(
                     fontSize: 24.0,
@@ -221,14 +311,7 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
               !_keyboardVisibilityController.isVisible
                   ? FloatingActionButton(
                       backgroundColor: Colors.green.shade800,
-                      onPressed: () {
-                        _nounsQuizzBrain
-                            .checkAnswer(_controller.text)
-                            .then((value) {
-                          _showAlertResult(value);
-                        });
-                        _focusNode.unfocus();
-                      },
+                      onPressed: () => _checkAnswer(),
                       child: Icon(
                         Icons.check,
                         color: Colors.white,
