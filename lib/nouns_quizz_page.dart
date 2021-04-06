@@ -38,12 +38,12 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
   void _checkAnswer() {
     if (_controller.text.isEmpty) return;
 
-    _nounsQuizzBrain
-        .checkAnswer(_controller.text)
-        .then((answer) {
-          _showResultAlert(answer);
-          _controller.clear();
-        });
+    // _nounsQuizzBrain
+    //     .checkAnswer(_controller.text)
+    //     .then((answer) {
+    //       _showResultAlert(answer);
+    //       _controller.clear();
+    //     });
     //_focusNode.unfocus();
   }
 
@@ -57,7 +57,7 @@ class _NounsQuizzPageState extends State<NounsQuizzPage> {
         ),
         title: 'Правильный ответ:',
         type: AlertType.info,
-        desc: _nounsQuizzBrain.getQuestion().answer.toUpperCase(),
+        desc: '_nounsQuizzBrain.getQuestion().answer.toUpperCase()',
         buttons: [
           DialogButton(
             child: Text('OK'),

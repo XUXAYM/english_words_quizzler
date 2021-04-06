@@ -1,6 +1,7 @@
 
 class Question{
-  String answer;
-  String word;
-  Question(this.word, this.answer);
+  Question(this.word, this.answers);
+
+  final List<String> answers;
+  final String word;
 }
