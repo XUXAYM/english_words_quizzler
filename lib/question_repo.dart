@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:english_words_quizzler/question.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+
+const kQuestionsPath = 'questions';
 final List<Question> nounsMonosyllabicSafe = [
   Question('time', ['время']),
   Question('year', ['год']),
@@ -828,13 +831,31 @@ final List<Question> nounsMonosyllabicSafe = [
 ];
 
 class QuestionRepo {
-  final List<Question> _questions = [
-    Question('', ['']),
-  ];
+  List<Question> _questions;
 
-  static final QuestionRepo _repo = QuestionRepo();
-
-  factory QuestionRepo() {
-    return _repo;
+  Future<void> initData() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if(prefs.containsKey(kQuestionsPath)){
+      var storageData = prefs.getStringList(kQuestionsPath);
+      _questions = storageData.map<Question>((e) => Question.fromJson(jsonDecode(e))).toList();
+    }else{
+      var mappedQuestions = nounsMonosyllabicSafe.map<String>((e) => jsonEncode(e.toJson())).toList();
+      Future<void> saveQuestions = prefs.setStringList(kQuestionsPath, mappedQuestions);
+      _questions = nounsMonosyllabicSafe;
+      await saveQuestions;
+    }
   }
+
+  Future<void> saveData() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if(_questions == null) return;
+    await prefs.setStringList(kQuestionsPath, _questions.map((e) => jsonEncode(e.toJson())).toList());
+  }
+
+  Question getByOrder(int number) => _questions[number];
+
+  List<Question> getAll() => _questions;
+
+  int getLength() => _questions.length;
+
 }
